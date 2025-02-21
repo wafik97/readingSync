@@ -5,89 +5,90 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 
 public class PageSyncHandler extends TextWebSocketHandler {
 
-    // A map that holds the list of sessions per room
-    private static final Map<String, CopyOnWriteArrayList<WebSocketSession>> rooms = new HashMap<>();
-    private static final Map<String, User> userSessions = new HashMap<>();
-
-    // Maximum number of users allowed per room
+    private static final Map<String, CopyOnWriteArrayList<WebSocketSession>> rooms = new ConcurrentHashMap<>();
+    private static final Map<String, User> userSessions = new ConcurrentHashMap<>();
     private static final int MAX_USERS_PER_ROOM = 5;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws IOException {
-        String room = "room1"; // You can change this logic to dynamically assign rooms to users
+        String room = "room1";
+        CopyOnWriteArrayList<WebSocketSession> roomSessions = rooms.computeIfAbsent(room, k -> new CopyOnWriteArrayList<>());
 
-        // Create a new user instance and associate it with the session
-        User user = new User(session.getId(), room, 1);  // Start the user at page 1
-
-        // Get the list of users in the room
-        CopyOnWriteArrayList<WebSocketSession> roomSessions = rooms.getOrDefault(room, new CopyOnWriteArrayList<>());
-
-        // Check if the room has reached the maximum number of users
         if (roomSessions.size() >= MAX_USERS_PER_ROOM) {
-            // If the room is full, reject the connection
-            session.sendMessage(new TextMessage("Room is full"));
+            session.sendMessage(new TextMessage("{\"type\":\"error\",\"message\":\"Room is full\"}"));
             session.close();
             return;
         }
 
-        // Add the session to the room and the user session map
-        roomSessions.add(session);
-        rooms.put(room, roomSessions);
+        User user = new User(session.getId(), room, 1);
         userSessions.put(session.getId(), user);
+        roomSessions.add(session);
 
-        // Send a message to the room about the new user
-        sendMessageToRoom(room, "New user joined: " + user.getId());
-
-        System.out.println("User connected: " + user.getId() + " to room: " + room);
+        sendMessageToRoom(room, "{\"type\":\"user_join\",\"userId\":\"" + user.getId() + "\",\"page\":1}");
+        sendUserListUpdate(room);
     }
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
-        // Extract the message content
-        String messageContent = message.getPayload();
+        String payload = message.getPayload();
+        User user = userSessions.get(session.getId());
 
-        // Check if it's a page update or chat message
-        if (messageContent.startsWith("page:")) {
-            int page = Integer.parseInt(messageContent.substring(5));
-            User user = userSessions.get(session.getId());
-            if (user != null) {
+        if (user == null) return;
+
+        try {
+            Map<String, Object> data = objectMapper.readValue(payload, Map.class);
+            String type = (String) data.get("type");
+
+            if ("page_update".equals(type)) {
+                int page = (int) data.get("page");
                 user.setCurrentPage(page);
-                // Send the page update to all users in the room
-                sendMessageToRoom(user.getRoom(), "User " + user.getId() + " is now on page " + page);
+                sendMessageToRoom(user.getRoom(), "{\"type\":\"page_update\",\"userId\":\"" + user.getId() + "\",\"page\":" + page + "}");
             }
-        } else {
-            // It's a chat message, send it to the room
-            User user = userSessions.get(session.getId());
-            if (user != null) {
-                sendMessageToRoom(user.getRoom(), user.getId() + ": " + messageContent);
-            }
+        } catch (Exception e) {
+            session.sendMessage(new TextMessage("{\"type\":\"error\",\"message\":\"Invalid message format\"}"));
         }
     }
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws IOException {
-        // Remove the session and the user from the session map when the connection is closed
         User user = userSessions.remove(session.getId());
         if (user != null) {
             rooms.get(user.getRoom()).remove(session);
-            sendMessageToRoom(user.getRoom(), "User " + user.getId() + " left the room");
+            sendMessageToRoom(user.getRoom(), "{\"type\":\"user_leave\",\"userId\":\"" + user.getId() + "\"}");
+            sendUserListUpdate(user.getRoom());
         }
     }
 
-    // Method to send a message to all users in a particular room
     private void sendMessageToRoom(String room, String message) throws IOException {
         for (WebSocketSession s : rooms.getOrDefault(room, new CopyOnWriteArrayList<>())) {
             if (s.isOpen()) {
                 s.sendMessage(new TextMessage(message));
             }
         }
+    }
+
+    private void sendUserListUpdate(String room) throws IOException {
+        StringBuilder userListJson = new StringBuilder("{\"type\":\"user_list\",\"users\":[");
+        boolean first = true;
+        for (WebSocketSession session : rooms.getOrDefault(room, new CopyOnWriteArrayList<>())) {
+            User user = userSessions.get(session.getId());
+            if (user != null) {
+                if (!first) userListJson.append(",");
+                userListJson.append("{\"userId\":\"").append(user.getId()).append("\",\"page\":").append(user.getCurrentPage()).append("}");
+                first = false;
+            }
+        }
+        userListJson.append("]}");
+        sendMessageToRoom(room, userListJson.toString());
     }
 }

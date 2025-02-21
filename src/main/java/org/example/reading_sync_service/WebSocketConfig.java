@@ -14,3 +14,4 @@ public class WebSocketConfig implements WebSocketConfigurer {
         registry.addHandler(new PageSyncHandler(), "/sync").setAllowedOrigins("*");
     }
 }
+
