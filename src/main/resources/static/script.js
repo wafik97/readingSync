@@ -1,14 +1,9 @@
 let currentPage = 1;
 let pdfDoc = null;
-let socket = new WebSocket("ws://localhost:8080/sync");
+let socket = null;  // Initially, no socket connection
 
 // Store the users and their current pages
 let users = {};
-
-// Open WebSocket connection
-socket.addEventListener("open", function(event) {
-    console.log("Connected to WebSocket");
-});
 
 // Function to update the user list in the sidebar
 function updateUserList() {
@@ -16,49 +11,74 @@ function updateUserList() {
     userList.innerHTML = "";  // Clear current list
 
     for (const userId in users) {
+
+        if (userId.length > 10) {
+                    continue;
+                }
+
         const li = document.createElement("li");
         li.classList.add("user-item");
-        li.innerHTML = `<span>User ${userId}:</span> Page ${users[userId]}`;
+        li.innerHTML = `<span>${userId}:</span> Page ${users[userId]}`;
         userList.appendChild(li);
     }
 }
 
-// Handle messages from the server
-socket.addEventListener("message", function(event) {
-    const message = JSON.parse(event.data);  // Parse JSON message
-    console.log("Received message:", message);
+// Function to handle the WebSocket connection after username is chosen
+function connectWebSocket(username) {
+    socket = new WebSocket("ws://localhost:8080/sync");
 
-    try {
-        if (message.type === "user_join") {
-            // Handle user joining
-            users[message.userId] = message.page;
-            updateUserList();
-        }
-        else if (message.type === "user_list") {
-            // Handle user list update
-            message.users.forEach(user => {
+    // Open WebSocket connection
+    socket.addEventListener("open", function(event) {
+        console.log("Connected to WebSocket");
+
+        // Send the user join message with the username as userId
+        socket.send(JSON.stringify({ type: "user_join", userId: username, page: currentPage }));
+    });
+
+    // Handle messages from the server
+    socket.addEventListener("message", function(event) {
+        const message = JSON.parse(event.data);  // Parse JSON message
+        console.log("Received message:", message);
+
+        // Handle user list update
+        if (message.type === "user_list") {
+            users = {};  // Clear current users
+            message.users.forEach(function(user) {
                 users[user.userId] = user.page;
             });
-            updateUserList();
+            updateUserList();  // Update the UI with the new user list
         }
-        else if (message.type === "page_update") {
-            // Handle page updates
-            users[message.userId] = message.page;
-            updateUserList();
+
+        // Handle page updates
+        if (message.type === "page_update") {
+            const userId = message.userId;
+            const page = message.page;
+
+            // Update the user's page if they are in the user list
+            if (users[userId] !== undefined) {
+                users[userId] = page;
+                updateUserList();  // Update the UI with the new page for the user
+            }
         }
-        else {
-            console.log("Unexpected message format:", message);
+
+        // Handle user join and leave
+        if (message.type === "user_join" || message.type === "user_leave") {
+            const userId = message.userId;
+            if (message.type === "user_join") {
+                users[userId] = message.page;
+            } else {
+                delete users[userId];
+            }
+            updateUserList();  // Update the UI after the user list changes
         }
-    } catch (error) {
-        console.error("Error processing WebSocket message:", error);
-    }
-});
+    });
+}
 
 // Function to send the current page update to the WebSocket server
 function sendPageUpdate() {
     const message = JSON.stringify({
         type: "page_update",
-        userId: "someUserId", // You should set the actual userId here
+        userId: userId, // Use the entered username as userId here
         page: currentPage
     });
     socket.send(message);
@@ -129,5 +149,26 @@ document.getElementById('pdfFile').addEventListener('change', function(event) {
     const file = event.target.files[0];
     if (file) {
         loadPdf(file);
+    }
+});
+
+// Set up the start button for the username prompt
+document.getElementById('submitBtn').addEventListener('click', function() {
+    let username = document.getElementById('usernameInput').value.trim();
+
+    // Check if the username is empty or too long
+    if (username === "") {
+        alert("Please enter a valid username!");
+    } else if (username.length > 10) {
+        alert("Username cannot be longer than 10 characters!");
+    } else {
+        // Close the username modal
+        document.getElementById('usernameModal').style.display = "none";
+
+        // Store the username as the userId
+        userId = username;
+
+        // Now open the WebSocket connection with the username as userId
+        connectWebSocket(userId);
     }
 });

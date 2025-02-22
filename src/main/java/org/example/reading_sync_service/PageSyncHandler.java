@@ -21,7 +21,7 @@ public class PageSyncHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws IOException {
-        String room = "room1";
+        String room = "room1";  // Default room
         CopyOnWriteArrayList<WebSocketSession> roomSessions = rooms.computeIfAbsent(room, k -> new CopyOnWriteArrayList<>());
 
         if (roomSessions.size() >= MAX_USERS_PER_ROOM) {
@@ -30,6 +30,7 @@ public class PageSyncHandler extends TextWebSocketHandler {
             return;
         }
 
+        // Create the user but don't assign a userId yet
         User user = new User(session.getId(), room, 1);
         userSessions.put(session.getId(), user);
         roomSessions.add(session);
@@ -49,11 +50,19 @@ public class PageSyncHandler extends TextWebSocketHandler {
             Map<String, Object> data = objectMapper.readValue(payload, Map.class);
             String type = (String) data.get("type");
 
+            if ("user_join".equals(type)) {
+                // When receiving the user_join message, update userId
+                String userId = (String) data.get("userId");
+                user.setId(userId);  // Update userId
+                sendMessageToRoom(user.getRoom(), "{\"type\":\"user_join\",\"userId\":\"" + user.getId() + "\",\"page\":1}");
+            }
+
             if ("page_update".equals(type)) {
                 int page = (int) data.get("page");
                 user.setCurrentPage(page);
                 sendMessageToRoom(user.getRoom(), "{\"type\":\"page_update\",\"userId\":\"" + user.getId() + "\",\"page\":" + page + "}");
             }
+
         } catch (Exception e) {
             session.sendMessage(new TextMessage("{\"type\":\"error\",\"message\":\"Invalid message format\"}"));
         }
@@ -79,6 +88,7 @@ public class PageSyncHandler extends TextWebSocketHandler {
 
     private void sendUserListUpdate(String room) throws IOException {
         StringBuilder userListJson = new StringBuilder("{\"type\":\"user_list\",\"users\":[");
+
         boolean first = true;
         for (WebSocketSession session : rooms.getOrDefault(room, new CopyOnWriteArrayList<>())) {
             User user = userSessions.get(session.getId());
