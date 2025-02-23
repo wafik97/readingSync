@@ -14,8 +14,8 @@ import java.util.Map;
 
 public class PageSyncHandler extends TextWebSocketHandler {
 
-    private static final Map<String, CopyOnWriteArrayList<WebSocketSession>> rooms = new ConcurrentHashMap<>();
-    private static final Map<String, User> userSessions = new ConcurrentHashMap<>();
+    static final Map<String, CopyOnWriteArrayList<WebSocketSession>> rooms = new ConcurrentHashMap<>();
+    static final Map<String, User> userSessions = new ConcurrentHashMap<>();
     private static final int MAX_USERS_PER_ROOM = 5;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
