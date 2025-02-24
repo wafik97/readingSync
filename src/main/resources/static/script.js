@@ -18,7 +18,8 @@ function updateUserList() {
 
         const li = document.createElement("li");
         li.classList.add("user-item");
-        li.innerHTML = `<span>${userId}:</span> Page ${users[userId]}`;
+        li.innerHTML = `<span>${userId}:</span> Page ${users[userId]};`;
+
         userList.appendChild(li);
     }
 }
@@ -162,13 +163,27 @@ document.getElementById('submitBtn').addEventListener('click', function() {
     } else if (username.length > 10) {
         alert("Username cannot be longer than 10 characters!");
     } else {
-        // Close the username modal
-        document.getElementById('usernameModal').style.display = "none";
 
-        // Store the username as the userId
-        userId = username;
 
-        // Now open the WebSocket connection with the username as userId
-        connectWebSocket(userId);
+         userId = username;
+
+         connectWebSocket(username);
+
+                      socket.addEventListener("message", function(event) {
+                                             const message = JSON.parse(event.data);
+                                             if (message.type != "error") {
+
+                                               document.getElementById('usernameModal').style.display = "none";
+
+                                             }
+                                             else{
+
+                                              alert(message.message);
+
+                                             }
+
+                      });
+
+
     }
 });

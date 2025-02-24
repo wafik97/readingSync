@@ -35,7 +35,7 @@ public class PageSyncHandler extends TextWebSocketHandler {
         userSessions.put(session.getId(), user);
         roomSessions.add(session);
 
-        sendMessageToRoom(room, "{\"type\":\"user_join\",\"userId\":\"" + user.getId() + "\",\"page\":1}");
+        sendMessageToRoom(room, "{\"type\":\"user_join\",\"userId\":\"" + user.getId() + "\",\"page\":0}");
         sendUserListUpdate(room);
     }
 
