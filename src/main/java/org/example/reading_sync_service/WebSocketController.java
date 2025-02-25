@@ -31,10 +31,6 @@ public class WebSocketController {
             return new Message("user_list", users);
         }
 
-
-
-
-
         // If message type is invalid
         return new Message("error", "Invalid message format");
     }

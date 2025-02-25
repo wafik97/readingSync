@@ -55,9 +55,10 @@ public class PageSyncHandler extends TextWebSocketHandler {
                 // When receiving the user_join message, update userId
 
                 String userId = (String) data.get("userId");
-                Map<String, User> userSession=  userSessions;
+
                 exists = userSessions.values().stream().anyMatch(myUser -> userId.equals(myUser.getId()));
                 if(exists){
+                    session.sendMessage(new TextMessage("{\"type\":\"error\",\"message\":\"Username already exists\"}"));
                     my_afterConnectionClosed( session);
                     return;
                 }

@@ -38,11 +38,7 @@ function connectWebSocket(username) {
         socket.send(JSON.stringify({ type: "user_join", userId: username, page: currentPage }));
     });
 
-    socket.addEventListener("close", function(event) {
-        console.log("WebSocket connection closed", event);
-        window.location.reload();
-        alert("Username already exists");
-    });
+
 
     // Handle messages from the server
     socket.addEventListener("message", function(event) {
@@ -184,8 +180,9 @@ document.getElementById('submitBtn').addEventListener('click', function() {
 
                }
                else{
-
+                window.location.reload();
                alert(message.message);
+
 
                }
 
@@ -195,3 +192,4 @@ document.getElementById('submitBtn').addEventListener('click', function() {
 
     }
 });
+
