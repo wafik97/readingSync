@@ -41,6 +41,7 @@ public class PageSyncHandler extends TextWebSocketHandler {
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
+        boolean exists = false;
         String payload = message.getPayload();
         User user = userSessions.get(session.getId());
 
@@ -52,7 +53,14 @@ public class PageSyncHandler extends TextWebSocketHandler {
 
             if ("user_join".equals(type)) {
                 // When receiving the user_join message, update userId
+
                 String userId = (String) data.get("userId");
+                Map<String, User> userSession=  userSessions;
+                exists = userSessions.values().stream().anyMatch(myUser -> userId.equals(myUser.getId()));
+                if(exists){
+                    my_afterConnectionClosed( session);
+                    return;
+                }
                 user.setId(userId);  // Update userId
                 sendMessageToRoom(user.getRoom(), "{\"type\":\"user_join\",\"userId\":\"" + user.getId() + "\",\"page\":1}");
             }
@@ -76,6 +84,16 @@ public class PageSyncHandler extends TextWebSocketHandler {
             sendMessageToRoom(user.getRoom(), "{\"type\":\"user_leave\",\"userId\":\"" + user.getId() + "\"}");
             sendUserListUpdate(user.getRoom());
         }
+    }
+
+    public void my_afterConnectionClosed(WebSocketSession session) throws IOException {
+        User user = userSessions.remove(session.getId());
+        if (user != null) {
+            rooms.get(user.getRoom()).remove(session);
+            sendMessageToRoom(user.getRoom(), "{\"type\":\"user_leave\",\"userId\":\"" + user.getId() + "\"}");
+            sendUserListUpdate(user.getRoom());
+        }
+        session.close();
     }
 
     private void sendMessageToRoom(String room, String message) throws IOException {
