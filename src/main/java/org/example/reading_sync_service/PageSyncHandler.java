@@ -15,13 +15,20 @@ import java.util.Map;
 public class PageSyncHandler extends TextWebSocketHandler {
 
     static final Map<String, CopyOnWriteArrayList<WebSocketSession>> rooms = new ConcurrentHashMap<>();
+    static {
+        rooms.put("room1", new CopyOnWriteArrayList<>());
+        rooms.put("room2", new CopyOnWriteArrayList<>());
+        rooms.put("room3", new CopyOnWriteArrayList<>());
+        rooms.put("room4", new CopyOnWriteArrayList<>());
+    }
     static final Map<String, User> userSessions = new ConcurrentHashMap<>();
+    static final Map<String, String> bookForRoom = new ConcurrentHashMap<>();
     private static final int MAX_USERS_PER_ROOM = 5;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws IOException {
-        String room = "room1";  // Default room
+        String room = "room4";  // Default room
         CopyOnWriteArrayList<WebSocketSession> roomSessions = rooms.computeIfAbsent(room, k -> new CopyOnWriteArrayList<>());
 
         if (roomSessions.size() >= MAX_USERS_PER_ROOM) {
@@ -55,15 +62,26 @@ public class PageSyncHandler extends TextWebSocketHandler {
                 // When receiving the user_join message, update userId
 
                 String userId = (String) data.get("userId");
-
-                exists = userSessions.values().stream().anyMatch(myUser -> userId.equals(myUser.getId()));
+                String room = (String) data.get("room");
+                 Map<String, User> userSession = userSessions ;
+                exists = userSessions.values().stream().anyMatch(myUser -> userId.equals(myUser.getId())&&room.equals(myUser.getRoom()));
                 if(exists){
                     session.sendMessage(new TextMessage("{\"type\":\"error\",\"message\":\"Username already exists\"}"));
                     my_afterConnectionClosed( session);
                     return;
                 }
                 user.setId(userId);  // Update userId
+                user.setRoom(room);
+
+                if(rooms.get(room).size()==MAX_USERS_PER_ROOM){
+                    session.sendMessage(new TextMessage("{\"type\":\"error\",\"message\":\"Room is full\"}"));
+                    my_afterConnectionClosed( session);
+                    return;
+                }
+                updateRoom(session, room,user);
                 sendMessageToRoom(user.getRoom(), "{\"type\":\"user_join\",\"userId\":\"" + user.getId() + "\",\"page\":1}");
+                sendUserListUpdate(room);
+
             }
 
             if ("page_update".equals(type)) {
@@ -77,10 +95,34 @@ public class PageSyncHandler extends TextWebSocketHandler {
         }
     }
 
+
+    public boolean updateRoom(WebSocketSession session,String room,User remove) throws IOException {
+        CopyOnWriteArrayList<WebSocketSession> roomSessions = rooms.computeIfAbsent(room, k -> new CopyOnWriteArrayList<>());
+        if (roomSessions.size() >= MAX_USERS_PER_ROOM) {
+
+            roomSessions = rooms.computeIfAbsent("room4", k -> new CopyOnWriteArrayList<>());
+            roomSessions.clear();
+            session.close();
+            return false;
+        }
+        // Create the user but don't assign a userId yet
+        User user = new User(remove.getId(), room, 1);
+
+        userSessions.remove(remove.getId());
+        userSessions.put(remove.getId(), user);
+        roomSessions.add(session);
+
+        roomSessions = rooms.computeIfAbsent("room4", k -> new CopyOnWriteArrayList<>());
+        roomSessions.clear();
+        return true;
+    }
+
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws IOException {
         User user = userSessions.remove(session.getId());
+
         if (user != null) {
+            userSessions.remove(user.getId());
             rooms.get(user.getRoom()).remove(session);
             sendMessageToRoom(user.getRoom(), "{\"type\":\"user_leave\",\"userId\":\"" + user.getId() + "\"}");
             sendUserListUpdate(user.getRoom());
