@@ -27,7 +27,7 @@ function updateUserList() {
 
 
 // Function to handle the WebSocket connection after username is chosen
-function connectWebSocket(username) {
+function connectWebSocket(username,room) {
     socket = new WebSocket("ws://localhost:8080/sync");
 
     // Open WebSocket connection
@@ -35,7 +35,7 @@ function connectWebSocket(username) {
         console.log("Connected to WebSocket");
 
         // Send the user join message with the username as userId
-        socket.send(JSON.stringify({ type: "user_join", userId: username, page: currentPage }));
+        socket.send(JSON.stringify({ type: "user_join", userId: username, page: currentPage , room: room }));
     });
 
 
@@ -160,6 +160,7 @@ document.getElementById('pdfFile').addEventListener('change', function(event) {
 // Set up the start button for the username prompt
 document.getElementById('submitBtn').addEventListener('click', function() {
     let username = document.getElementById('usernameInput').value.trim();
+    let room = document.getElementById('roomSelect').value.trim();
 
     // Check if the username is empty or too long
     if (username === "") {
@@ -170,7 +171,7 @@ document.getElementById('submitBtn').addEventListener('click', function() {
 
         userId = username;
 
-        connectWebSocket(username);
+        connectWebSocket(username,room);
 
         socket.addEventListener("message", function(event) {
                const message = JSON.parse(event.data);
@@ -182,6 +183,7 @@ document.getElementById('submitBtn').addEventListener('click', function() {
                else{
                 window.location.reload();
                alert(message.message);
+
 
 
                }
