@@ -34,6 +34,7 @@ public class WebSocketController {
 
 
 
+
         // If message type is invalid
         return new Message("error", "Invalid message format");
     }

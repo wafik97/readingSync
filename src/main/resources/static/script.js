@@ -23,6 +23,9 @@ function updateUserList() {
     }
 }
 
+
+
+
 // Function to handle the WebSocket connection after username is chosen
 function connectWebSocket(username) {
     socket = new WebSocket("ws://localhost:8080/sync");
@@ -33,6 +36,12 @@ function connectWebSocket(username) {
 
         // Send the user join message with the username as userId
         socket.send(JSON.stringify({ type: "user_join", userId: username, page: currentPage }));
+    });
+
+    socket.addEventListener("close", function(event) {
+        console.log("WebSocket connection closed", event);
+        window.location.reload();
+        alert("Username already exists");
     });
 
     // Handle messages from the server
