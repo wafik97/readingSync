@@ -140,6 +140,7 @@ function renderPage(pageNum) {
 }
 
 
+
 // Detect page scroll and send page update
 document.getElementById('pdf-container').addEventListener('scroll', function () {
     const container = document.getElementById('pdf-container');
