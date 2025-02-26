@@ -5,6 +5,8 @@ let socket = null;  // Initially, no socket connection
 // Store the users and their current pages
 let users = {};
 
+
+
 // Function to update the user list in the sidebar
 function updateUserList() {
     const userList = document.getElementById("userList");
@@ -156,6 +158,52 @@ document.getElementById('pdfFile').addEventListener('change', function(event) {
         loadPdf(file);
     }
 });
+
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    console.log("DOM fully loaded");
+    loadRoomData(); // Initial load
+
+    const roomSelect = document.getElementById('roomSelect');
+
+    roomSelect.addEventListener('change', loadRoomData); // Reload JSON on change
+
+});
+
+function loadRoomData() {
+    fetch('/files.json')
+        .then(response => response.json())
+        .then(data => {
+            const roomSelect = document.getElementById('roomSelect');
+            const pdfSelect = document.getElementById('pdfSelect');
+
+
+            const selectedRoom = roomSelect.value;
+            const selectedRoomStatus = data.rooms[selectedRoom]; // Get PDF assigned to room
+
+            console.log("Room selection updated:", selectedRoomStatus);
+
+            pdfSelect.innerHTML = ''; // Clear options
+
+            if (!selectedRoomStatus || selectedRoomStatus === "none") {
+                data.pdfFiles.forEach(pdf => {
+                    const option = document.createElement('option');
+                    option.value = pdf;
+                    option.textContent = pdf;
+                    pdfSelect.appendChild(option);
+                });
+            } else {
+                const option = document.createElement('option');
+                option.value = selectedRoomStatus;
+                option.textContent = selectedRoomStatus;
+                pdfSelect.appendChild(option);
+            }
+        })
+        .catch(error => console.error('Error loading JSON:', error));
+}
+
+
 
 // Set up the start button for the username prompt
 document.getElementById('submitBtn').addEventListener('click', function() {
