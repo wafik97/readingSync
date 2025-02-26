@@ -1,0 +1,12 @@
+{
+  "pdfFiles": [
+    "file1.pdf",
+    "file2.pdf",
+    "file3.pdf"
+  ],
+  "rooms": {
+    "room1": "none",
+    "room2": "none",
+    "room3": "none"
+  }
+}
