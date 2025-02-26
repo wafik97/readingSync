@@ -12,6 +12,7 @@ public class User {
         this.currentPage = currentPage;
     }
 
+
     // Getters and setters
     public String getId() {
         return id;
