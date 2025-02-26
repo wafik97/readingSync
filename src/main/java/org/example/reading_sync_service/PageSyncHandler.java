@@ -6,6 +6,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.example.reading_sync_service.JsonRoomManager;
 
 import java.io.IOException;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -25,9 +26,12 @@ public class PageSyncHandler extends TextWebSocketHandler {
     static final Map<String, String> bookForRoom = new ConcurrentHashMap<>();
     private static final int MAX_USERS_PER_ROOM = 5;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private JsonRoomManager roomManager ;
+
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws IOException {
+        roomManager =  new JsonRoomManager();
         String room = "room4";  // Default room
         CopyOnWriteArrayList<WebSocketSession> roomSessions = rooms.computeIfAbsent(room, k -> new CopyOnWriteArrayList<>());
 
@@ -63,7 +67,8 @@ public class PageSyncHandler extends TextWebSocketHandler {
 
                 String userId = (String) data.get("userId");
                 String room = (String) data.get("room");
-                 Map<String, User> userSession = userSessions ;
+                String pdfName = (String) data.get("pdfName");
+              //   Map<String, User> userSession = userSessions ;
                 exists = userSessions.values().stream().anyMatch(myUser -> userId.equals(myUser.getId())&&room.equals(myUser.getRoom()));
                 if(exists){
                     session.sendMessage(new TextMessage("{\"type\":\"error\",\"message\":\"Username already exists\"}"));
@@ -79,6 +84,12 @@ public class PageSyncHandler extends TextWebSocketHandler {
                     return;
                 }
                 updateRoom(session, room,user);
+                if(!roomManager.getRoomValue( room).equals(pdfName)){
+                    roomManager.setRoomValue(room,pdfName);
+                }
+
+
+
                 sendMessageToRoom(user.getRoom(), "{\"type\":\"user_join\",\"userId\":\"" + user.getId() + "\",\"page\":1}");
                 sendUserListUpdate(room);
 
@@ -124,6 +135,11 @@ public class PageSyncHandler extends TextWebSocketHandler {
         if (user != null) {
             userSessions.remove(user.getId());
             rooms.get(user.getRoom()).remove(session);
+
+            if(rooms.get(user.getRoom()).isEmpty()){
+                roomManager.setRoomValue(user.getRoom(),"none");
+            }
+
             sendMessageToRoom(user.getRoom(), "{\"type\":\"user_leave\",\"userId\":\"" + user.getId() + "\"}");
             sendUserListUpdate(user.getRoom());
         }
@@ -133,6 +149,11 @@ public class PageSyncHandler extends TextWebSocketHandler {
         User user = userSessions.remove(session.getId());
         if (user != null) {
             rooms.get(user.getRoom()).remove(session);
+
+            if(rooms.get(user.getRoom()).isEmpty()){
+                roomManager.setRoomValue(user.getRoom(),"none");
+            }
+
             sendMessageToRoom(user.getRoom(), "{\"type\":\"user_leave\",\"userId\":\"" + user.getId() + "\"}");
             sendUserListUpdate(user.getRoom());
         }

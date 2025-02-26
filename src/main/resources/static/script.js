@@ -1,3 +1,4 @@
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
 let currentPage = 1;
 let pdfDoc = null;
 let socket = null;  // Initially, no socket connection
@@ -29,15 +30,16 @@ function updateUserList() {
 
 
 // Function to handle the WebSocket connection after username is chosen
-function connectWebSocket(username,room) {
+function connectWebSocket(username,room,pdfName) {
     socket = new WebSocket("ws://localhost:8080/sync");
+    getFileByName(pdfName);
 
     // Open WebSocket connection
     socket.addEventListener("open", function(event) {
         console.log("Connected to WebSocket");
 
         // Send the user join message with the username as userId
-        socket.send(JSON.stringify({ type: "user_join", userId: username, page: currentPage , room: room }));
+        socket.send(JSON.stringify({ type: "user_join", userId: username, page: currentPage , room: room ,pdfName: pdfName}));
     });
 
 
@@ -152,13 +154,36 @@ document.getElementById('pdf-container').addEventListener('scroll', function () 
     }
 });
 
-// Listen for file input and load the selected PDF
-document.getElementById('pdfFile').addEventListener('change', function(event) {
-    const file = event.target.files[0];
-    if (file) {
+
+// get file obj
+async function getFileByName(filename) {
+    try {
+        const response = await fetch(`http://localhost:8080/files/${filename}`);
+        if (!response.ok) {
+            throw new Error(`File not found: ${filename}`);
+        }
+
+        const blob = await response.blob();
+
+        // Simulate a "user-selected" file by creating a `File` object
+        const file = new File([blob], filename, { type: blob.type });
+
+        // Now we have a `File` object, just like the one from the `change` event
         loadPdf(file);
+    } catch (error) {
+        console.error("Error loading file:", error);
     }
-});
+}
+
+
+
+// Listen for file input and load the selected PDF
+//document.getElementById('pdfFile').addEventListener('change', function(event) {
+//    const file = event.target.files[0];
+//    if (file) {
+//        loadPdf(file);
+//    }
+//});
 
 
 
@@ -210,6 +235,7 @@ function loadRoomData() {
 document.getElementById('submitBtn').addEventListener('click', function() {
     let username = document.getElementById('usernameInput').value.trim();
     let room = document.getElementById('roomSelect').value.trim();
+    let pdfName = document.getElementById('pdfSelect').value.trim();
 
     // Check if the username is empty or too long
     if (username === "") {
@@ -220,13 +246,14 @@ document.getElementById('submitBtn').addEventListener('click', function() {
 
         userId = username;
 
-        connectWebSocket(username,room);
+        connectWebSocket(username,room,pdfName);
 
         socket.addEventListener("message", function(event) {
                const message = JSON.parse(event.data);
                if (message.type != "error") {
 
                document.getElementById('usernameModal').style.display = "none";
+
 
                }
                else{
