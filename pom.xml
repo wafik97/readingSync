@@ -15,6 +15,7 @@
     <relativePath/>
   </parent>
 
+
   <dependencies>
     <!-- Spring Boot WebSocket -->
     <dependency>
