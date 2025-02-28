@@ -5,7 +5,6 @@ public class User {
     private String room;
     private int currentPage;
 
-
     // Constructor
     public User(String id, String room, int currentPage) {
         this.id = id;
