@@ -1,37 +1,44 @@
 package org.example.reading_sync_service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.springframework.core.io.ClassPathResource;
-import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class JsonRoomManager {
 
-    private static final String JSON_FILE_PATH = "static/files.json"; // Path in resources folder
-    private ObjectMapper objectMapper;
-    private JsonNode rootNode;
+    // Singleton instance
+    private static JsonRoomManager instance;
 
-    // Constructor to initialize the ObjectMapper and JSON file
-    public JsonRoomManager() throws IOException {
-        this.objectMapper = new ObjectMapper();
-        // Load JSON from resources
-        ClassPathResource resource = new ClassPathResource(JSON_FILE_PATH);
-        this.rootNode = objectMapper.readTree(resource.getFile());
+    static final Map<String, String> bookForRoom = new ConcurrentHashMap<>();
+    static {
+        bookForRoom.put("room1", "none");
+        bookForRoom.put("room2", "none");
+        bookForRoom.put("room3", "none");
     }
 
-    // Method to get the value of a specific room
+    // Private constructor to prevent instantiation
+    private JsonRoomManager() {}
+
+    // Public method to provide access to the singleton instance
+    public static JsonRoomManager getInstance() {
+        if (instance == null) {
+            synchronized (JsonRoomManager.class) {
+                if (instance == null) {
+                    instance = new JsonRoomManager();
+                }
+            }
+        }
+        return instance;
+    }
+
+    public Map<String, String> getRooms() {
+        return bookForRoom;
+    }
+
     public String getRoomValue(String roomName) {
-        JsonNode roomsNode = rootNode.path("rooms");
-        return roomsNode.path(roomName).asText();
+        return bookForRoom.get(roomName);
     }
 
-    // Method to update the value of a specific room
-    public void setRoomValue(String roomName, String newValue) throws IOException {
-        ObjectNode roomsNode = (ObjectNode) rootNode.path("rooms");
-        roomsNode.put(roomName, newValue);
-
-        // Write the updated JSON back to the file
-        objectMapper.writerWithDefaultPrettyPrinter().writeValue(new ClassPathResource(JSON_FILE_PATH).getFile(), rootNode);
+    public void setRoomValue(String roomName, String newValue) {
+        bookForRoom.put(roomName, newValue);
     }
 }

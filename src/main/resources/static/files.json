@@ -1,8 +1,0 @@
-{
-  "pdfFiles" : [ "L3.pdf", "L2.pdf", "test.pdf" ],
-  "rooms" : {
-    "room1" : "none",
-    "room2" : "none",
-    "room3" : "none"
-  }
-}

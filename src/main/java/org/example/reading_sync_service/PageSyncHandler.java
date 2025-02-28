@@ -23,7 +23,7 @@ public class PageSyncHandler extends TextWebSocketHandler {
         rooms.put("room4", new CopyOnWriteArrayList<>());
     }
     static final Map<String, User> userSessions = new ConcurrentHashMap<>();
-    static final Map<String, String> bookForRoom = new ConcurrentHashMap<>();
+
     private static final int MAX_USERS_PER_ROOM = 5;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private JsonRoomManager roomManager ;
@@ -31,7 +31,7 @@ public class PageSyncHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws IOException {
-        roomManager =  new JsonRoomManager();
+        roomManager = JsonRoomManager.getInstance();
         String room = "room4";  // Default room
         CopyOnWriteArrayList<WebSocketSession> roomSessions = rooms.computeIfAbsent(room, k -> new CopyOnWriteArrayList<>());
 

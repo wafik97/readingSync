@@ -2,6 +2,7 @@ package org.example.reading_sync_service;
 
 import org.example.model.User;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,8 +26,8 @@ public class ReadingSyncController {
                 ));
     }
 
-    @GetMapping("/users/room")
-    public List<User> getUsersByRoom(@RequestParam String room) {
+    @GetMapping("/users/{room}")
+    public List<User> getUsersByRoom(@PathVariable String room) {
         return PageSyncHandler.rooms.getOrDefault(room, new CopyOnWriteArrayList<>()).stream()
                 .map(session -> PageSyncHandler.userSessions.get(session.getId()))
                 .filter(user -> user != null)

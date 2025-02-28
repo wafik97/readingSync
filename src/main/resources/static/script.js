@@ -198,7 +198,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function loadRoomData() {
-    fetch('/files.json')
+    fetch('/files/fullData')
         .then(response => response.json())
         .then(data => {
             const roomSelect = document.getElementById('roomSelect');
