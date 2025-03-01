@@ -27,6 +27,13 @@ jobs:
       - name: Build and Run Tests
         run: mvn clean test  # This runs tests but doesn't create the .jar file
 
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        with:
+          name: smokeTest report unittests
+          path: 'target/surefire-reports/TEST-*.xml'
+          reporter: java-junit
+
   docker-build-push:
     needs: test  # This ensures the docker-build-push job runs after the test job
     runs-on: ubuntu-latest
@@ -57,10 +64,3 @@ jobs:
       - name: Push Docker image to DockerHub
         run: |
           docker push wafik97/reading-sync-service:${{ github.run_number }}
-
-      - name: Test Report
-        uses: dorny/test-reporter@v1
-        with:
-          name: smokeTest report unittests
-          path: 'target/surefire-reports/TEST-*.xml'
-          reporter: java-junit
