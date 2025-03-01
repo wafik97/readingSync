@@ -26,7 +26,7 @@ public class PageSyncHandler extends TextWebSocketHandler {
 
     private static final int MAX_USERS_PER_ROOM = 5;
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private JsonRoomManager roomManager ;
+    JsonRoomManager roomManager ;
 
 
     @Override
@@ -107,16 +107,17 @@ public class PageSyncHandler extends TextWebSocketHandler {
     }
 
 
-    public boolean updateRoom(WebSocketSession session,String room,User remove) throws IOException {
+    public void updateRoom(WebSocketSession session, String room, User remove) throws IOException {
         CopyOnWriteArrayList<WebSocketSession> roomSessions = rooms.computeIfAbsent(room, k -> new CopyOnWriteArrayList<>());
         if (roomSessions.size() >= MAX_USERS_PER_ROOM) {
 
             roomSessions = rooms.computeIfAbsent("room4", k -> new CopyOnWriteArrayList<>());
             roomSessions.clear();
             session.close();
-            return false;
+            return;
         }
-        // Create the user but don't assign a userId yet
+
+
         User user = new User(remove.getId(), room, 1);
 
         userSessions.remove(remove.getId());
@@ -125,7 +126,6 @@ public class PageSyncHandler extends TextWebSocketHandler {
 
         roomSessions = rooms.computeIfAbsent("room4", k -> new CopyOnWriteArrayList<>());
         roomSessions.clear();
-        return true;
     }
 
     @Override
@@ -160,7 +160,7 @@ public class PageSyncHandler extends TextWebSocketHandler {
         session.close();
     }
 
-    private void sendMessageToRoom(String room, String message) throws IOException {
+    void sendMessageToRoom(String room, String message) throws IOException {
         for (WebSocketSession s : rooms.getOrDefault(room, new CopyOnWriteArrayList<>())) {
             if (s.isOpen()) {
                 s.sendMessage(new TextMessage(message));

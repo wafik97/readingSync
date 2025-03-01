@@ -16,7 +16,7 @@ public class WebClientConfig {
     }
 
     private void configureCodecs(CodecConfigurer configurer) {
-        // Configure maximum in-memory size for response body to 10MB (adjust as needed)
+        // Configure maximum in-memory size for response body to 10MB
         configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024);  // 10MB
     }
 }
