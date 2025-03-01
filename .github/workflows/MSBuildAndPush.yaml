@@ -21,12 +21,6 @@ jobs:
       - name: Build and Run Tests
         run: mvn clean test
 
-      - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        if: always()
-        with:
-          files: |
-            target/surefire-reports/*.xml
 
   docker-build-push:
     needs: test
