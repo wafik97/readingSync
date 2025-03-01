@@ -1,5 +1,10 @@
 name: Build and Push
 
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
 on:
   push:
 
@@ -52,3 +57,10 @@ jobs:
       - name: Push Docker image to DockerHub
         run: |
           docker push wafik97/reading-sync-service:${{ github.run_number }}
+
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        with:
+          name: smokeTest report unittests
+          path: 'target/surefire-reports/TEST-*.xml'
+          reporter: java-junit
