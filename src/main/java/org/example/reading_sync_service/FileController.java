@@ -47,6 +47,7 @@ public class FileController {
                 .body(resource);
     }
 
+
     // Fetch JSON data from a URL
     @GetMapping("/data")
     public Map<String, Object> getJsonData() throws IOException {

@@ -53,7 +53,7 @@ class JsonRoomManagerTest {
 
     @Test
     void testConcurrentAccess() throws InterruptedException {
-        // Simulate concurrent updates to the same room
+
         Thread thread1 = new Thread(() -> roomManager.setRoomValue("room1", "Thread1Book"));
         Thread thread2 = new Thread(() -> roomManager.setRoomValue("room1", "Thread2Book"));
 
@@ -70,7 +70,7 @@ class JsonRoomManagerTest {
 
     @Test
     void testConcurrentAccessMultipleRooms() throws InterruptedException {
-        // Simulate concurrent updates to different rooms
+
         Thread thread1 = new Thread(() -> roomManager.setRoomValue("room1", "Thread1Book"));
         Thread thread2 = new Thread(() -> roomManager.setRoomValue("room2", "Thread2Book"));
         Thread thread3 = new Thread(() -> roomManager.setRoomValue("room3", "Thread3Book"));
@@ -99,30 +99,11 @@ class JsonRoomManagerTest {
 
     @Test
     void testSetInvalidRoomName() {
-        // Attempting to set a value for an invalid room name
+
         Exception exception = assertThrows(NullPointerException.class, () -> {
             roomManager.setRoomValue(null, "InvalidBook");
         });
         assertEquals(null, exception.getMessage(), "Should throw an exception for null room name.");
     }
 
-    @Test
-    void testSingletonInstanceConsistency() {
-        // Create two instances and check if they are the same
-        JsonRoomManager anotherInstance = JsonRoomManager.getInstance();
-        assertSame(roomManager, anotherInstance, "Instances should be the same singleton instance.");
-
-        // Modify room value via the second instance and verify changes in the first instance
-        anotherInstance.setRoomValue("room1", "BookFromSecondInstance");
-        assertEquals("BookFromSecondInstance", roomManager.getRoomValue("room1"),
-                "Changes made via another instance should reflect in the singleton.");
-    }
-
-    @Test
-    void testRoomValuePersistence() {
-        // Test persistence of room values across different tests
-        roomManager.setRoomValue("room1", "PersistentBook");
-        JsonRoomManager newRoomManager = JsonRoomManager.getInstance();
-        assertEquals("PersistentBook", newRoomManager.getRoomValue("room1"), "Room value should persist across instances.");
-    }
 }

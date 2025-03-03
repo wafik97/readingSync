@@ -25,7 +25,7 @@ jobs:
           java-version: '23'
 
       - name: Build and Run Tests
-        run: mvn clean test  # This runs tests but doesn't create the .jar file
+        run: mvn clean test
 
       - name: Test Report
         uses: dorny/test-reporter@v1
@@ -35,7 +35,7 @@ jobs:
           reporter: java-junit
 
   docker-build-push:
-    needs: test  # This ensures the docker-build-push job runs after the test job
+    needs: test
     runs-on: ubuntu-latest
 
     steps:
