@@ -2,6 +2,10 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
 let currentPage = 1;
 let pdfDoc = null;
 let socket = null;  // Initially, no socket connection
+const chatBox = document.getElementById("chat-box");
+const chatInput = document.getElementById("chat-input");
+const sendBtn = document.getElementById("send-btn");
+const errorMessage = document.getElementById("error-message");
 
 // Store the users and their current pages
 let users = {};
@@ -56,6 +60,12 @@ function connectWebSocket(username,room,pdfName) {
                 users[user.userId] = user.page;
             });
             updateUserList();  // Update the UI with the new user list
+        }
+
+        if (message.type === "chat") {
+
+              handleMessageDisplay(message.message, chatBox, chatInput);
+
         }
 
         // Handle page updates
@@ -270,4 +280,43 @@ document.getElementById('submitBtn').addEventListener('click', function() {
 
     }
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+    sendBtn.addEventListener("click", () => {
+        sendMessage();
+    });
+
+    chatInput.addEventListener("keypress", (event) => {
+        if (event.key === "Enter") {
+            sendMessage();
+        }
+    });
+
+    function sendMessage() {
+        let message = chatInput.value.trim();
+        if (message.length === 0) return;
+
+        if (message.length > 25) {
+            errorMessage.textContent = "Message cannot exceed 25 characters!";
+            return;
+        }
+
+        errorMessage.textContent = ""; // Clear error if valid
+
+        // Call the extracted function to handle the message display
+        socket.send(JSON.stringify({ type: "chat", userId: userId, message: message}));
+     //   handleMessageDisplay(message, chatBox, chatInput);
+    }
+});
+
+// Extracted function for displaying the message and clearing the input
+function handleMessageDisplay(message, chatBox, chatInput) {
+    const messageElement = document.createElement("p");
+    messageElement.textContent = message;
+    chatBox.appendChild(messageElement);
+    chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll
+
+    chatInput.value = ""; // Clear input
+}
+
 

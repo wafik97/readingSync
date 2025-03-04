@@ -101,6 +101,14 @@ public class PageSyncHandler extends TextWebSocketHandler {
                 sendMessageToRoom(user.getRoom(), "{\"type\":\"page_update\",\"userId\":\"" + user.getId() + "\",\"page\":" + page + "}");
             }
 
+            if ("chat".equals(type)) {
+                String my_message = (String) data.get("message");
+                my_message = user.getId() + ": " + my_message;
+                String formattedMessage = String.format("{\"type\":\"chat\",\"message\":\"%s\"}", my_message.replace("\"", "\\\""));
+                sendMessageToRoom(user.getRoom(), formattedMessage);
+            }
+
+
         } catch (Exception e) {
             session.sendMessage(new TextMessage("{\"type\":\"error\",\"message\":\"Invalid message format\"}"));
         }
