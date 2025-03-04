@@ -94,24 +94,25 @@
             margin: 5px 0;
             text-align: center;
         }
-        .chat-input-container {
-            display: flex;
-            align-items: center;
+       .chat-input-container {
+        display: block; /* Change from flex to block */
+        margin-top: 10px;
         }
-        #chat-input {
-            flex-grow: 1;
+
+        #chat-input, #send-btn {
+            width: 100%; /* Ensure both have the same width */
             padding: 5px;
             border: 1px solid #ccc;
             border-radius: 3px;
+            box-sizing: border-box;
         }
+
         #send-btn {
-            padding: 5px 10px;
-            margin-left: 5px;
-            border: none;
             background-color: #007bff;
             color: white;
             cursor: pointer;
-            border-radius: 3px;
+            margin-top: 10px;
+            border: none;
         }
         #send-btn:hover {
             background-color: #0056b3;
