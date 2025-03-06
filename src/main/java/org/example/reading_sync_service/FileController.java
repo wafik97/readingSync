@@ -66,17 +66,17 @@ public class FileController {
         return objectMapper.readValue(jsonData, Map.class);
     }
 
-    // New endpoint to return room status
+
     @GetMapping("/roomStatus")
     public ResponseEntity<Map<String, String>> getRoomStatus() {
-        // Get the room status from JsonRoomManager
+
         Map<String, String> roomStatus = roomManager.getRooms();
 
         if (roomStatus.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        // Return the room status as a JSON response
+
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(roomStatus);

@@ -48,7 +48,8 @@ class JsonRoomManagerTest {
     @Test
     void testUpdateRoomValue() {
         roomManager.setRoomValue("room1", "NewBook");
-        assertEquals("NewBook", roomManager.getRoomValue("room1"), "room1 should be updated to 'NewBook'.");
+        roomManager.setRoomValue("room1", "NewBookTest");
+        assertEquals("NewBookTest", roomManager.getRoomValue("room1"), "room1 should be updated to 'NewBook'.");
     }
 
     @Test
@@ -83,7 +84,6 @@ class JsonRoomManagerTest {
         thread2.join();
         thread3.join();
 
-        // Ensure each room has been updated to the thread value
         assertTrue("Thread1Book".equals(roomManager.getRoomValue("room1")) ||
                 "Thread2Book".equals(roomManager.getRoomValue("room1")));
         assertTrue("Thread2Book".equals(roomManager.getRoomValue("room2")) ||
@@ -103,7 +103,7 @@ class JsonRoomManagerTest {
         Exception exception = assertThrows(NullPointerException.class, () -> {
             roomManager.setRoomValue(null, "InvalidBook");
         });
-        assertEquals(null, exception.getMessage(), "Should throw an exception for null room name.");
+        assertNull(exception.getMessage(), "Should throw an exception for null room name.");
     }
 
 }

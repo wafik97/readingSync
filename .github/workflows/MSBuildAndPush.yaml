@@ -30,7 +30,7 @@ jobs:
       - name: Test Report
         uses: dorny/test-reporter@v1
         with:
-          name: smokeTest report unittests
+          name:  report unittests
           path: 'target/surefire-reports/TEST-*.xml'
           reporter: java-junit
 

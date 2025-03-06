@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class JsonRoomManager {
 
-    // Singleton instance
+
     private static JsonRoomManager instance;
 
     static final Map<String, String> bookForRoom = new ConcurrentHashMap<>();
@@ -15,10 +15,10 @@ public class JsonRoomManager {
         bookForRoom.put("room3", "none");
     }
 
-    // Private constructor to prevent instantiation
+
     private JsonRoomManager() {}
 
-    // Public method to provide access to the singleton instance
+
     public static JsonRoomManager getInstance() {
         if (instance == null) {
             synchronized (JsonRoomManager.class) {
